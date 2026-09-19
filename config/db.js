@@ -8,20 +8,31 @@ try {
   // Ignore in environments where overriding DNS is restricted
 }
 
+let isConnected = false;
+
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
+
   const uri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/school_management';
 
   try {
     const conn = await mongoose.connect(uri, {
       dbName: 'school_management'
     });
+    isConnected = true;
     console.log(`MongoDB Connected: ${conn.connection.host} (Database: ${conn.connection.name})`);
   } catch (error) {
     console.error(`Database connection error: ${error.message}`);
     if (uri.includes('mongodb+srv')) {
       console.error('Atlas Tip: Ensure your current IP is whitelisted in MongoDB Atlas Network Access and credentials are valid.');
     }
-    process.exit(1);
+    if (process.env.NODE_ENV === 'production') {
+      console.error('Failed to connect to MongoDB in serverless environment.');
+    } else {
+      process.exit(1);
+    }
   }
 };
 

@@ -13,12 +13,14 @@ connectDB();
 
 const app = express();
 
-// Middlewares - Dynamic CORS handling for localhost, 127.0.0.1 and CLIENT_URL
+// Middlewares - Dynamic CORS handling for localhost, 127.0.0.1, FRONTEND_URL and CLIENT_URL
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'http://localhost:3000',
   'http://localhost:5000',
   'http://127.0.0.1:5000',
+  process.env.FRONTEND_URL,
   process.env.CLIENT_URL
 ].filter(Boolean);
 
@@ -37,9 +39,20 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Test Route
+// Root Route & Health Check
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Student Management Backend API is running'
+  });
+});
+
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'healthy', time: new Date() });
+  res.json({
+    success: true,
+    message: 'API is healthy',
+    time: new Date()
+  });
 });
 
 // Mount Routes
@@ -74,6 +87,11 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
-});
+
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
+}
+
+module.exports = app;
